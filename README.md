@@ -26,7 +26,7 @@ CRM de prospecção para validação da startup RiskMap — app de gestão de ri
 
 ## Fundadores
 
-- Lindo — Produto, Design, Vendas
+- Gabriel — Produto, Design, Vendas
 - Camila — Dados, Risco, Operações
 
 ## Stack
