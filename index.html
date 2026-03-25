@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiskMap CRM</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080c10;
+    --surface: #0e1318;
+    --surface2: #141b22;
+    --border: #1e2830;
+    --border2: #253040;
+    --gold: #c8a96e;
+    --gold2: #e8c98e;
+    --blue: #3a8fd6;
+    --green: #3ec97a;
+    --red: #e05555;
+    --orange: #e0924a;
+    --text: #e2ddd6;
+    --text2: #8a9aaa;
+    --text3: #4a5a6a;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed; left:0; top:0; bottom:0; width:220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    z-index: 100;
+  }
+  .logo {
+    padding: 28px 24px 24px;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo-tag {
+    font-size: 9px; letter-spacing: 4px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 6px;
+  }
+  .logo-name {
+    font-family: 'Syne', sans-serif;
+    font-size: 22px; font-weight: 800;
+    color: #fff; letter-spacing: -0.5px;
+  }
+  .logo-sub { font-size: 10px; color: var(--text3); margin-top: 3px; }
+
+  .nav { padding: 20px 0; flex: 1; }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 24px; font-size: 11px;
+    letter-spacing: 1px; color: var(--text3);
+    cursor: pointer; transition: all .2s;
+    border-left: 2px solid transparent;
+    text-transform: uppercase;
+  }
+  .nav-item:hover { color: var(--text2); background: var(--surface2); }
+  .nav-item.active {
+    color: var(--gold); background: var(--surface2);
+    border-left-color: var(--gold);
+  }
+  .nav-item svg { opacity: .6; flex-shrink: 0; }
+  .nav-item.active svg { opacity: 1; }
+
+  .sidebar-stats {
+    padding: 20px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .sidebar-stat {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .ss-label { font-size: 9px; letter-spacing: 2px; color: var(--text3); text-transform: uppercase; }
+  .ss-val { font-family: 'Syne', sans-serif; font-size: 22px; font-weight: 700; color: var(--gold); }
+
+  /* MAIN */
+  .main { margin-left: 220px; min-height: 100vh; display: flex; flex-direction: column; }
+
+  /* TOPBAR */
+  .topbar {
+    padding: 20px 40px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 20px;
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 50;
+  }
+  .page-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 18px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+
+  /* SEARCH & FILTERS */
+  .search-bar {
+    flex: 1; max-width: 400px;
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 9px 14px;
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    color: var(--text); outline: none;
+    transition: border .2s;
+  }
+  .search-bar::placeholder { color: var(--text3); }
+  .search-bar:focus { border-color: var(--gold); }
+
+  select.filter-select {
+    background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 9px 12px;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    color: var(--text2); outline: none; cursor: pointer;
+    transition: border .2s;
+  }
+  select.filter-select:focus { border-color: var(--gold); }
+  select.filter-select option { background: var(--surface2); }
+
+  .btn {
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    letter-spacing: 1px; text-transform: uppercase;
+    border: none; border-radius: 5px; cursor: pointer;
+    padding: 9px 16px; transition: all .2s;
+  }
+  .btn-gold {
+    background: var(--gold); color: #0a0a0a; font-weight: 500;
+  }
+  .btn-gold:hover { background: var(--gold2); }
+  .btn-ghost {
+    background: var(--surface2); color: var(--text2);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { border-color: var(--gold); color: var(--gold); }
+
+  /* METRICS ROW */
+  .metrics {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 1px; background: var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .metric-card {
+    background: var(--surface); padding: 22px 32px;
+  }
+  .metric-label {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--text3); margin-bottom: 10px;
+  }
+  .metric-value {
+    font-family: 'Syne', sans-serif; font-size: 32px;
+    font-weight: 800; line-height: 1;
+  }
+  .metric-value.gold { color: var(--gold); }
+  .metric-value.blue { color: var(--blue); }
+  .metric-value.green { color: var(--green); }
+  .metric-value.orange { color: var(--orange); }
+  .metric-sub { font-size: 10px; color: var(--text3); margin-top: 6px; }
+
+  /* TABLE AREA */
+  .table-area { padding: 24px 40px 60px; }
+
+  /* NICHO PILLS */
+  .nicho-filters {
+    display: flex; gap: 8px; margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .nicho-pill {
+    font-size: 10px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 6px 14px; border-radius: 20px; cursor: pointer;
+    border: 1px solid var(--border2); color: var(--text3);
+    background: var(--surface); transition: all .2s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .nicho-pill:hover { border-color: var(--gold); color: var(--gold); }
+  .nicho-pill.active { background: var(--gold); color: #0a0a0a; border-color: var(--gold); font-weight: 600; }
+  .nicho-count {
+    background: rgba(0,0,0,.2); border-radius: 10px;
+    padding: 1px 6px; font-size: 9px;
+  }
+  .nicho-pill.active .nicho-count { background: rgba(0,0,0,.25); }
+
+  /* TABLE */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%; border-collapse: collapse;
+    font-size: 12px;
+  }
+  thead tr {
+    border-bottom: 1px solid var(--border2);
+  }
+  th {
+    padding: 12px 16px; text-align: left;
+    font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+    color: var(--text3); font-weight: 400;
+    white-space: nowrap;
+  }
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background .15s;
+    cursor: pointer;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr.contacted { background: rgba(58,143,214,.04); }
+  tbody tr.contacted:hover { background: rgba(58,143,214,.08); }
+  td { padding: 12px 16px; vertical-align: middle; }
+
+  .company-name {
+    font-family: 'Syne', sans-serif; font-weight: 600;
+    font-size: 13px; color: #fff;
+  }
+  .company-bairro { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  .nicho-tag {
+    display: inline-block; font-size: 9px; letter-spacing: 1px;
+    text-transform: uppercase; padding: 3px 8px; border-radius: 3px;
+    white-space: nowrap;
+  }
+  .tag-ti { background: rgba(58,143,214,.15); color: #5aaae6; border: 1px solid rgba(58,143,214,.3); }
+  .tag-saude { background: rgba(62,201,122,.12); color: #5ed690; border: 1px solid rgba(62,201,122,.3); }
+  .tag-construcao { background: rgba(224,146,74,.12); color: #e8a86a; border: 1px solid rgba(224,146,74,.3); }
+  .tag-restaurante { background: rgba(200,169,110,.12); color: var(--gold); border: 1px solid rgba(200,169,110,.3); }
+  .tag-contabil { background: rgba(160,120,200,.12); color: #c09ad0; border: 1px solid rgba(160,120,200,.3); }
+  .tag-agencia { background: rgba(224,85,85,.12); color: #e08080; border: 1px solid rgba(224,85,85,.3); }
+
+  .contact-name { color: var(--text2); }
+  .contact-cargo { font-size: 10px; color: var(--text3); }
+
+  .phone-link {
+    color: var(--text2); text-decoration: none; font-size: 11px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .phone-link:hover { color: var(--green); }
+
+  .wa-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: #1a3a1a; border: 1px solid #25a244;
+    color: #3ec97a; border-radius: 5px;
+    padding: 6px 11px; font-size: 10px;
+    font-family: 'DM Mono', monospace;
+    text-decoration: none; transition: all .2s;
+    white-space: nowrap; letter-spacing: .5px;
+  }
+  .wa-btn:hover { background: #25a244; color: #fff; }
+
+  /* STATUS BADGE */
+  .status-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 10px; padding: 4px 10px; border-radius: 12px;
+    letter-spacing: .5px; white-space: nowrap;
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .s-new { background: rgba(74,90,106,.2); color: var(--text3); border: 1px solid var(--border2); }
+  .s-new .status-dot { background: var(--text3); }
+  .s-contacted { background: rgba(58,143,214,.12); color: #5aaae6; border: 1px solid rgba(58,143,214,.25); }
+  .s-contacted .status-dot { background: var(--blue); }
+  .s-replied { background: rgba(224,146,74,.12); color: #e8a86a; border: 1px solid rgba(224,146,74,.25); }
+  .s-replied .status-dot { background: var(--orange); }
+  .s-interested { background: rgba(62,201,122,.12); color: #5ed690; border: 1px solid rgba(62,201,122,.25); }
+  .s-interested .status-dot { background: var(--green); }
+  .s-not { background: rgba(224,85,85,.1); color: #e08080; border: 1px solid rgba(224,85,85,.2); }
+  .s-not .status-dot { background: var(--red); }
+
+  .prio-badge {
+    font-size: 9px; letter-spacing: 1px; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 3px; font-weight: 600;
+  }
+  .p-max { background: rgba(224,85,85,.15); color: #e08080; }
+  .p-alta { background: rgba(200,169,110,.15); color: var(--gold); }
+  .p-media { background: rgba(62,201,122,.12); color: #5ed690; }
+
+  /* MODAL */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(8,12,16,.85); backdrop-filter: blur(4px);
+    z-index: 200; display: none; align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border2);
+    border-radius: 12px; width: 560px; max-height: 90vh;
+    overflow-y: auto; box-shadow: 0 40px 80px rgba(0,0,0,.6);
+    animation: slideUp .25s ease;
+  }
+  @keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+  }
+  .modal-header {
+    padding: 24px 28px 20px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: flex-start; justify-content: space-between;
+  }
+  .modal-company { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700; color: #fff; }
+  .modal-nicho { font-size: 10px; color: var(--text3); margin-top: 4px; }
+  .modal-close {
+    background: none; border: none; color: var(--text3);
+    font-size: 20px; cursor: pointer; padding: 2px 6px;
+    transition: color .2s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-body { padding: 24px 28px; }
+  .modal-section { margin-bottom: 24px; }
+  .modal-section-title {
+    font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 12px;
+  }
+  .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .modal-field { }
+  .field-label { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: var(--text3); margin-bottom: 4px; }
+  .field-val { font-size: 13px; color: var(--text); }
+  .field-val a { color: var(--blue); text-decoration: none; }
+  .field-val a:hover { color: var(--gold); }
+
+  .status-select-wrap { margin-bottom: 16px; }
+  .status-select {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 10px 12px;
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    color: var(--text); outline: none; cursor: pointer;
+  }
+  .status-select:focus { border-color: var(--gold); }
+
+  .comment-area {
+    width: 100%; background: var(--surface2); border: 1px solid var(--border2);
+    border-radius: 6px; padding: 12px 14px;
+    font-family: 'DM Mono', monospace; font-size: 12px;
+    color: var(--text); outline: none; resize: vertical;
+    min-height: 100px; line-height: 1.6;
+  }
+  .comment-area::placeholder { color: var(--text3); }
+  .comment-area:focus { border-color: var(--gold); }
+
+  .modal-footer {
+    padding: 16px 28px 24px;
+    display: flex; gap: 10px; align-items: center;
+  }
+
+  /* comments list */
+  .comment-item {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 6px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .comment-meta { font-size: 9px; color: var(--text3); margin-bottom: 6px; letter-spacing: 1px; }
+  .comment-text { font-size: 12px; color: var(--text2); line-height: 1.6; }
+
+  .empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--text3); font-size: 13px;
+  }
+  .empty-state div:first-child { font-size: 32px; margin-bottom: 12px; }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  /* Toast */
+  .toast {
+    position: fixed; bottom: 24px; right: 24px;
+    background: var(--green); color: #0a0a0a;
+    font-family: 'DM Mono', monospace; font-size: 11px;
+    padding: 12px 20px; border-radius: 6px; letter-spacing: 1px;
+    transform: translateY(60px); opacity: 0;
+    transition: all .3s; z-index: 999; font-weight: 600;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+
+  .row-count { font-size: 10px; color: var(--text3); margin-bottom: 12px; letter-spacing: 1px; }
+
+  @media (max-width: 900px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .topbar { padding: 16px 20px; }
+    .table-area { padding: 16px 20px 40px; }
+    .metrics { grid-template-columns: repeat(2,1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="logo">
+    <div class="logo-tag">Startup</div>
+    <div class="logo-name">RiskMap</div>
+    <div class="logo-sub">CRM de Prospecção</div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item active">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Leads
+    </div>
+    <div class="nav-item" onclick="filterStatus('contacted')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.35 2 2 0 0 1 3.6 1.13h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.96a16 16 0 0 0 6 6l.96-.96a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 21.73 16.92z"/></svg>
+      Contatados
+    </div>
+    <div class="nav-item" onclick="filterStatus('interested')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+      Interessados
+    </div>
+    <div class="nav-item" onclick="clearFilters()">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      Todos
+    </div>
+  </nav>
+  <div class="sidebar-stats">
+    <div class="sidebar-stat">
+      <div class="ss-label">Total Leads</div>
+      <div class="ss-val" id="ss-total">150</div>
+    </div>
+    <div class="sidebar-stat">
+      <div class="ss-label">Taxa Contato</div>
+      <div class="ss-val" id="ss-rate">0%</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="page-title">CRM Leads</div>
+    <input class="search-bar" type="text" id="searchInput" placeholder="Buscar empresa, contato, bairro..." oninput="applyFilters()">
+    <select class="filter-select" id="statusFilter" onchange="applyFilters()">
+      <option value="">Status: Todos</option>
+      <option value="new">Não contatado</option>
+      <option value="contacted">Contatado</option>
+      <option value="replied">Respondeu</option>
+      <option value="interested">Interessado</option>
+      <option value="not">Não interessado</option>
+    </select>
+    <select class="filter-select" id="nichoFilter" onchange="applyFilters()">
+      <option value="">Todos os nichos</option>
+      <option value="TI & Tecnologia">TI & Tecnologia</option>
+      <option value="Clínicas & Saúde">Clínicas & Saúde</option>
+      <option value="Construção & Reformas">Construção & Reformas</option>
+      <option value="Restaurantes & Food">Restaurantes & Food</option>
+      <option value="Contabilidade">Contabilidade</option>
+      <option value="Agências">Agências</option>
+    </select>
+    <div class="topbar-right">
+      <button class="btn btn-ghost" onclick="exportCSV()">↓ Exportar CSV</button>
+    </div>
+  </div>
+
+  <!-- METRICS -->
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-label">Total filtrados</div>
+      <div class="metric-value gold" id="m-total">150</div>
+      <div class="metric-sub">leads cadastrados</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Contatados</div>
+      <div class="metric-value blue" id="m-contacted">0</div>
+      <div class="metric-sub">primeiros contatos</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Responderam</div>
+      <div class="metric-value orange" id="m-replied">0</div>
+      <div class="metric-sub">awaiting follow-up</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Interessados</div>
+      <div class="metric-value green" id="m-interested">0</div>
+      <div class="metric-sub">em piloto</div>
+    </div>
+  </div>
+
+  <!-- TABLE AREA -->
+  <div class="table-area">
+
+    <!-- NICHO PILLS -->
+    <div class="nicho-filters" id="nichoPills"></div>
+
+    <div class="row-count" id="rowCount"></div>
+
+    <div class="table-wrap">
+      <table id="leadsTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Empresa</th>
+            <th>Nicho</th>
+            <th>Contato</th>
+            <th>Telefone</th>
+            <th>WhatsApp</th>
+            <th>Status</th>
+            <th>Prioridade</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+      <div class="empty-state" id="emptyState" style="display:none">
+        <div>🔍</div>
+        <div>Nenhum lead encontrado com esses filtros</div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div>
+        <div class="modal-company" id="m-company"></div>
+        <div class="modal-nicho" id="m-nicho-tag"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-section">
+        <div class="modal-section-title">Informações da Empresa</div>
+        <div class="modal-grid">
+          <div class="modal-field"><div class="field-label">Bairro / Região</div><div class="field-val" id="m-bairro"></div></div>
+          <div class="modal-field"><div class="field-label">Porte</div><div class="field-val" id="m-porte"></div></div>
+          <div class="modal-field"><div class="field-label">Telefone</div><div class="field-val" id="m-phone"></div></div>
+          <div class="modal-field"><div class="field-label">LinkedIn</div><div class="field-val" id="m-linkedin"></div></div>
+          <div class="modal-field"><div class="field-label">Contato</div><div class="field-val" id="m-contact"></div></div>
+          <div class="modal-field"><div class="field-label">Cargo</div><div class="field-val" id="m-cargo"></div></div>
+        </div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Dor Principal</div>
+        <div class="field-val" id="m-dor" style="font-size:13px;color:var(--text2);line-height:1.6;"></div>
+      </div>
+      <div class="modal-section">
+        <div class="modal-section-title">Status & Acompanhamento</div>
+        <div class="status-select-wrap">
+          <div class="field-label" style="margin-bottom:8px">Status atual</div>
+          <select class="status-select" id="m-status-select" onchange="updateStatus()">
+            <option value="new">⬜ Não contatado</option>
+            <option value="contacted">🔵 Contatado</option>
+            <option value="replied">🟠 Respondeu</option>
+            <option value="interested">🟢 Interessado</option>
+            <option value="not">🔴 Não interessado</option>
+          </select>
+        </div>
+        <div class="field-label" style="margin-bottom:8px">Adicionar comentário</div>
+        <textarea class="comment-area" id="m-comment-input" placeholder="Ex: Falei com o Ricardo, ele mencionou que perdeu um dev sênior mês passado. Recontatar na semana que vem..."></textarea>
+        <div style="margin-top:10px">
+          <button class="btn btn-gold" onclick="saveComment()" style="width:100%">Salvar comentário</button>
+        </div>
+      </div>
+      <div class="modal-section" id="comments-section">
+        <div class="modal-section-title">Histórico</div>
+        <div id="m-comments-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ─────────────────────────────────────────────────────────────
+const LEADS_RAW = [
+  // TI & TECNOLOGIA (35 leads)
+  {n:"TechFlow Soluções",nicho:"TI & Tecnologia",bairro:"Vila Olímpia",porte:"ME (8–15 func.)",contato:"Lucas Rodrigues",cargo:"CEO / Co-founder",tel:"(11) 9 4521-8830",linkedin:"linkedin.com/in/lucas-rodrigues-ti",dor:"Dev sênior concentra todo o conhecimento. Se ele sair, contratos com clientes ficam em risco imediato.",prio:"max"},
+  {n:"DevMaster SP",nicho:"TI & Tecnologia",bairro:"Pinheiros",porte:"ME (10–20 func.)",contato:"Matheus Oliveira",cargo:"CTO / Sócio Técnico",tel:"(11) 9 7832-4401",linkedin:"linkedin.com/in/matheus-oliveira-dev",dor:"Toda a infraestrutura de cliente em produção depende de 2 pessoas. Sem plano de contingência.",prio:"max"},
+  {n:"AgileCode",nicho:"TI & Tecnologia",bairro:"Paulista",porte:"ME (5–12 func.)",contato:"Gabriel Silva",cargo:"Sócio-Fundador",tel:"(11) 9 6123-7744",linkedin:"linkedin.com/in/gabriel-silva-agile",dor:"Metodologia ágil sem documentação de risco. Clientes dependem de deploys que uma única pessoa gerencia.",prio:"max"},
+  {n:"SoftBridge",nicho:"TI & Tecnologia",bairro:"Itaim Bibi",porte:"EPP (20–35 func.)",contato:"Pedro Almeida",cargo:"CEO",tel:"(11) 9 8844-3321",linkedin:"linkedin.com/in/pedro-almeida-soft",dor:"Empresa cresceu rápido, processos não acompanharam. Risco de perda de cliente grande por falha operacional.",prio:"max"},
+  {n:"DataPulse",nicho:"TI & Tecnologia",bairro:"Berrini",porte:"ME (8–18 func.)",contato:"Diego Ferreira",cargo:"Diretor de Tecnologia",tel:"(11) 9 5532-9980",linkedin:"linkedin.com/in/diego-ferreira-data",dor:"Dados de clientes concentrados em ambiente sem backup adequado. Falha pode gerar rescisão de contratos.",prio:"max"},
+  {n:"WebForce SP",nicho:"TI & Tecnologia",bairro:"Moema",porte:"ME (6–14 func.)",contato:"Bruno Costa",cargo:"Sócio-Fundador",tel:"(11) 9 7714-6650",linkedin:"linkedin.com/in/brunocosta-web",dor:"Turnover alto de devs. Cada saída custa R$15k+ em recrutamento e paralisa projetos por semanas.",prio:"max"},
+  {n:"CloudBase",nicho:"TI & Tecnologia",bairro:"Brooklin",porte:"ME (10–20 func.)",contato:"Felipe Santos",cargo:"CTO",tel:"(11) 9 4430-1122",linkedin:"linkedin.com/in/felipe-santos-cloud",dor:"Toda a infraestrutura cloud gerenciada por 1 pessoa. Sem documentação de acesso em emergência.",prio:"max"},
+  {n:"PixelDev",nicho:"TI & Tecnologia",bairro:"Jardins",porte:"ME (5–10 func.)",contato:"Igor Martins",cargo:"Co-founder",tel:"(11) 9 6618-7700",linkedin:"linkedin.com/in/igor-martins-pixel",dor:"Agência de produto com 3 clientes enterprise. Um bug grave sem protocolo pode encerrar o contrato.",prio:"max"},
+  {n:"AppNova",nicho:"TI & Tecnologia",bairro:"Butantã",porte:"ME (8–16 func.)",contato:"Vitor Souza",cargo:"CEO",tel:"(11) 9 9920-4455",linkedin:"linkedin.com/in/vitorsouza-appnova",dor:"Lançamentos de app sem checklist de risco. Um deploy errado em produção derrubou app de cliente por 8h.",prio:"max"},
+  {n:"SysTech SP",nicho:"TI & Tecnologia",bairro:"Lapa",porte:"EPP (22–40 func.)",contato:"André Nascimento",cargo:"Diretor Operacional",tel:"(11) 9 5571-3388",linkedin:"linkedin.com/in/andrenascimento-sys",dor:"Empresa de suporte técnico B2B. SLA de 4h. Sem protocolo formal de escalada de incidentes críticos.",prio:"max"},
+  {n:"CodeFactory",nicho:"TI & Tecnologia",bairro:"Vila Mariana",porte:"ME (7–14 func.)",contato:"Thiago Lima",cargo:"Sócio Técnico",tel:"(11) 9 8836-2210",linkedin:"linkedin.com/in/thiago-lima-code",dor:"Fábrica de software com 5 projetos simultâneos. PM único gerencia tudo — risco de burnout e perda de qualidade.",prio:"alta"},
+  {n:"Nexus Dev",nicho:"TI & Tecnologia",bairro:"Perdizes",porte:"ME (6–12 func.)",contato:"Gustavo Ramos",cargo:"CEO",tel:"(11) 9 4411-9930",linkedin:"linkedin.com/in/gustavoramos-nexus",dor:"Desenvolvimento sob medida para varejo. Sazonalidade de Black Friday sem plano de contingência de infra.",prio:"alta"},
+  {n:"BinaryWave",nicho:"TI & Tecnologia",bairro:"Tatuapé",porte:"ME (5–11 func.)",contato:"Leonardo Cardoso",cargo:"Sócio-Fundador",tel:"(11) 9 7750-5544",linkedin:"linkedin.com/in/leonardo-cardoso-bw",dor:"Startup de 3 anos. Produto único, equipe pequena. Toda a lógica de negócio está na cabeça do CTO.",prio:"alta"},
+  {n:"AlphaSoft",nicho:"TI & Tecnologia",bairro:"Santana",porte:"ME (9–18 func.)",contato:"Rodrigo Mendes",cargo:"Diretor",tel:"(11) 9 3320-8877",linkedin:"linkedin.com/in/rodrigomendes-alpha",dor:"Software para gestão de clínicas. Um bug crítico pode paralisar operação de vários consultórios ao mesmo tempo.",prio:"alta"},
+  {n:"Devora Tech",nicho:"TI & Tecnologia",bairro:"Bela Vista",porte:"ME (7–15 func.)",contato:"João Vieira",cargo:"CEO",tel:"(11) 9 6640-1199",linkedin:"linkedin.com/in/joaovieira-devora",dor:"Consultoria de transformação digital. Depende de 2 sócios que concentram todo relacionamento com cliente.",prio:"alta"},
+  {n:"TechMinds",nicho:"TI & Tecnologia",bairro:"ABC Paulista",porte:"ME (10–20 func.)",contato:"Daniel Cruz",cargo:"Fundador",tel:"(11) 9 4433-7712",linkedin:"linkedin.com/in/danielcruz-techminds",dor:"Empresa de treinamentos tech. Material didático e relacionamento concentrado em 1 instrutor sênior.",prio:"alta"},
+  {n:"InnoDev SP",nicho:"TI & Tecnologia",bairro:"Alphaville",porte:"EPP (25–45 func.)",contato:"Caio Barros",cargo:"Sócio Diretor",tel:"(11) 9 7721-4430",linkedin:"linkedin.com/in/caiobarros-inno",dor:"Scale-up de 4 anos. Cresceu rápido, processos internos nunca foram formalizados. Risco de compliance.",prio:"alta"},
+  {n:"Pulse Labs",nicho:"TI & Tecnologia",bairro:"Moema",porte:"ME (6–14 func.)",contato:"Rafael Lopes",cargo:"CTO",tel:"(11) 9 5512-8893",linkedin:"linkedin.com/in/rafaellopes-pulse",dor:"Lab de produto digital. Metodologia toda na cabeça da equipe — sem documentação de processo.",prio:"alta"},
+  {n:"Logik Tech",nicho:"TI & Tecnologia",bairro:"Guarulhos",porte:"ME (8–16 func.)",contato:"Henrique Pinto",cargo:"CEO",tel:"(11) 9 6634-2200",linkedin:"linkedin.com/in/henriquepinto-logik",dor:"Automação industrial. Um equipamento parado por falha de software custa R$50k/dia ao cliente.",prio:"max"},
+  {n:"Codecore SP",nicho:"TI & Tecnologia",bairro:"Osasco",porte:"ME (5–10 func.)",contato:"Eduardo Moura",cargo:"Sócio",tel:"(11) 9 8820-7761",linkedin:"linkedin.com/in/eduardo-moura-core",dor:"Startup early stage. Dois devs que acumulam produto + infraestrutura + suporte. Sem separação de papéis.",prio:"alta"},
+  // CLÍNICAS & SAÚDE (30 leads)
+  {n:"Clínica OdontoVida",nicho:"Clínicas & Saúde",bairro:"Vila Mariana",porte:"ME (5–12 func.)",contato:"Dr. Ricardo Mendes",cargo:"Diretor Clínico",tel:"(11) 9 4422-9901",linkedin:"linkedin.com/in/dr-ricardomendes",dor:"Clínica depende 100% do dentista principal. Agenda de 60 pacientes/dia tranca se ele adoecer.",prio:"max"},
+  {n:"Consultório Dra. Ana Lima",nicho:"Clínicas & Saúde",bairro:"Moema",porte:"ME (4–8 func.)",contato:"Dra. Ana Lima",cargo:"Proprietária",tel:"(11) 9 7740-5523",linkedin:"linkedin.com/in/dra-analima",dor:"Consultório de especialidade rara. Pacientes esperam meses. Um afastamento sem protocolo gera processo.",prio:"max"},
+  {n:"Clínica Saúde Total",nicho:"Clínicas & Saúde",bairro:"Pinheiros",porte:"ME (8–18 func.)",contato:"Dr. Carlos Souza",cargo:"Sócio-Proprietário",tel:"(11) 9 6611-3344",linkedin:"linkedin.com/in/drcarlossouza",dor:"Multidisciplinar com 6 especialistas. Faturamento de plano de saúde concentrado em 2 convênios — risco de descredenciamento.",prio:"max"},
+  {n:"OdontoFamily",nicho:"Clínicas & Saúde",bairro:"Santana",porte:"ME (5–10 func.)",contato:"Dra. Fernanda Costa",cargo:"Sócia Diretora",tel:"(11) 9 8833-6650",linkedin:"linkedin.com/in/dra-fernandacosta",dor:"Clínica de bairro com 15 anos. Prontuários ainda em papel. Auditoria do CRO pode gerar interdição.",prio:"alta"},
+  {n:"Clínica Bem Estar",nicho:"Clínicas & Saúde",bairro:"Lapa",porte:"ME (6–14 func.)",contato:"Dr. Marcos Alves",cargo:"Diretor Médico",tel:"(11) 9 5520-7788",linkedin:"linkedin.com/in/dr-marcosalves",dor:"Clínica de fisioterapia. Laudo de equipamento vencido pode gerar suspensão da Vigilância Sanitária.",prio:"max"},
+  {n:"Centro Médico Ibirapuera",nicho:"Clínicas & Saúde",bairro:"Moema",porte:"EPP (18–30 func.)",contato:"Dra. Juliana Ferreira",cargo:"Diretora",tel:"(11) 9 4410-2299",linkedin:"linkedin.com/in/dra-julianaferreira",dor:"Centro multiespecialidade. Médico sênior com maior agenda saindo. Risco de êxodo de pacientes.",prio:"max"},
+  {n:"Clínica Dra. Fernanda",nicho:"Clínicas & Saúde",bairro:"Itaim Bibi",porte:"ME (4–9 func.)",contato:"Dra. Fernanda Silva",cargo:"Proprietária",tel:"(11) 9 7732-5511",linkedin:"linkedin.com/in/dra-fernandasilva",dor:"Dermatologista premium. 100% particular. Se ela afasta 2 semanas, sem protocolo de cobertura, perde pacientes.",prio:"max"},
+  {n:"OdontoPrime SP",nicho:"Clínicas & Saúde",bairro:"Jardins",porte:"ME (6–12 func.)",contato:"Dr. Paulo Santos",cargo:"Proprietário",tel:"(11) 9 6623-8847",linkedin:"linkedin.com/in/dr-paulosantos",dor:"Clínica premium em área nobre. Equipamento de implante avariado custa R$80k e paralisa agenda por meses.",prio:"alta"},
+  {n:"Clínica NovaSaúde",nicho:"Clínicas & Saúde",bairro:"Tatuapé",porte:"ME (7–14 func.)",contato:"Dra. Camila Rocha",cargo:"Diretora Clínica",tel:"(11) 9 5541-9900",linkedin:"linkedin.com/in/dra-camilarocha",dor:"Clínica de bairro popular. Único convênio Unimed representa 70% do faturamento. Risco de descredenciamento.",prio:"max"},
+  {n:"Consultório Dr. Alves",nicho:"Clínicas & Saúde",bairro:"Perdizes",porte:"ME (3–7 func.)",contato:"Dr. Eduardo Nunes",cargo:"Proprietário",tel:"(11) 9 3310-4455",linkedin:"linkedin.com/in/dr-eduardonunes",dor:"Cardiologista com agenda cheia. Secretária de 10 anos pediu demissão. Risco de perda de pacientes na transição.",prio:"alta"},
+  {n:"Clínica SorriFácil",nicho:"Clínicas & Saúde",bairro:"Butantã",porte:"ME (5–10 func.)",contato:"Dra. Beatriz Silva",cargo:"Proprietária",tel:"(11) 9 7714-3322",linkedin:"linkedin.com/in/dra-beatrizsilva",dor:"Clínica odonto popular. Inadimplência de parcelamento de tratamentos acumulada sem processo de cobrança.",prio:"alta"},
+  {n:"Centro Clínico Paulista",nicho:"Clínicas & Saúde",bairro:"Bela Vista",porte:"EPP (20–38 func.)",contato:"Dr. Rafael Cardoso",cargo:"Diretor Administrativo",tel:"(11) 9 4431-6677",linkedin:"linkedin.com/in/dr-rafaelcardoso",dor:"Centro grande, 8 especialidades. Gestão centralizada no sócio-administrador que quer escalar. Sem processos.",prio:"alta"},
+  {n:"Clínica FisioBem",nicho:"Clínicas & Saúde",bairro:"Brooklin",porte:"ME (5–12 func.)",contato:"Dra. Larissa Melo",cargo:"Fisioterapeuta Proprietária",tel:"(11) 9 6622-0011",linkedin:"linkedin.com/in/dra-larissamelo",dor:"Clínica de fisio com convênio corporativo. Empresa parceira mudou seguro — sem protocolo para renegociar.",prio:"alta"},
+  {n:"Dr. Costa Pediatria",nicho:"Clínicas & Saúde",bairro:"Santo André",porte:"ME (4–8 func.)",contato:"Dr. Gustavo Pinto",cargo:"Proprietário",tel:"(11) 9 5560-8833",linkedin:"linkedin.com/in/dr-gustavopinto",dor:"Único pediatra da região. Agenda esgotada. Sem backup para emergências e sem gestão de risco de sobrecarga.",prio:"max"},
+  {n:"Clínica VidaSã",nicho:"Clínicas & Saúde",bairro:"Alphaville",porte:"ME (8–16 func.)",contato:"Dra. Mariana Vieira",cargo:"Diretora Clínica",tel:"(11) 9 7741-2299",linkedin:"linkedin.com/in/dra-marianavieira",dor:"Clínica de medicina integrativa em crescimento. Credenciamento com novos planos exige auditoria — sem histórico organizado.",prio:"alta"},
+  // CONSTRUÇÃO & REFORMAS (25 leads)
+  {n:"Construtora Sólida",nicho:"Construção & Reformas",bairro:"Mooca",porte:"ME (10–22 func.)",contato:"José Carlos Silva",cargo:"Proprietário",tel:"(11) 9 4420-7712",linkedin:"linkedin.com/in/josecarlos-solida",dor:"2 obras simultâneas com engenheiro único. Se ele sair ou adoecer, obra para e multa contratual começa a correr.",prio:"max"},
+  {n:"Reformas Paulista",nicho:"Construção & Reformas",bairro:"Pinheiros",porte:"ME (5–12 func.)",contato:"Antonio Mendes",cargo:"Sócio-Gerente",tel:"(11) 9 8841-5533",linkedin:"linkedin.com/in/antoniomendes-reform",dor:"Reforma de alto padrão. Atraso de 1 semana em obra de R$800k gera multa de R$8k/dia no contrato.",prio:"max"},
+  {n:"EngeSP Obras",nicho:"Construção & Reformas",bairro:"Lapa",porte:"ME (8–18 func.)",contato:"Sebastião Rodrigues",cargo:"Engenheiro Proprietário",tel:"(11) 9 6630-3344",linkedin:"linkedin.com/in/sebastiao-engesp",dor:"Obras residenciais e comerciais. Fornecedor único de estrutura metálica já atrasou 2 vezes. Sem plano B.",prio:"max"},
+  {n:"AlvenariaMestre",nicho:"Construção & Reformas",bairro:"Tatuapé",porte:"ME (7–15 func.)",contato:"Valmir Costa",cargo:"Proprietário",tel:"(11) 9 5511-2255",linkedin:"linkedin.com/in/valmir-alvenaria",dor:"Pedreiro mestre de obras é peça única. Saída dele paralisa 3 obras ativas e afeta R$1,2M em contratos.",prio:"max"},
+  {n:"Construtora Nova Era",nicho:"Construção & Reformas",bairro:"Santo André",porte:"ME (9–20 func.)",contato:"Claudinho Souza",cargo:"Sócio Diretor",tel:"(11) 9 7722-8899",linkedin:"linkedin.com/in/claudinho-novaera",dor:"Construtora com financiamento CEF. Documentação atrasada pode bloquear liberação de parcelas do financiamento.",prio:"alta"},
+  {n:"ReformaTech SP",nicho:"Construção & Reformas",bairro:"ABC Paulista",porte:"ME (6–14 func.)",contato:"Ronaldo Ferreira",cargo:"Proprietário",tel:"(11) 9 4433-1177",linkedin:"linkedin.com/in/ronaldo-reformatech",dor:"Reforma de escritórios corporativos. Um acidente de trabalho sem PPRA pode gerar interdição e processo.",prio:"max"},
+  {n:"ObraFácil",nicho:"Construção & Reformas",bairro:"Guarulhos",porte:"ME (8–18 func.)",contato:"Mauro Santos",cargo:"Gerente Geral",tel:"(11) 9 6642-4400",linkedin:"linkedin.com/in/mauro-obrafacil",dor:"Marketplace de mão de obra para reformas. Sem processo de vetting, risco de golpe de cliente ou prestador.",prio:"alta"},
+  {n:"Construtora Horizonte",nicho:"Construção & Reformas",bairro:"Alphaville",porte:"EPP (25–45 func.)",contato:"Aldenir Lima",cargo:"Diretor de Obras",tel:"(11) 9 7753-6611",linkedin:"linkedin.com/in/aldenir-horizonte",dor:"Construtora de condomínios. Atraso de entrega gera multa de 2% ao mês sobre valor total do imóvel.",prio:"max"},
+  {n:"BuildSP",nicho:"Construção & Reformas",bairro:"Barueri",porte:"ME (10–20 func.)",contato:"Gilberto Alves",cargo:"Proprietário",tel:"(11) 9 5563-7722",linkedin:"linkedin.com/in/gilberto-buildsp",dor:"Empresa de instalações elétricas e hidráulicas. Sem certificações NR10 em dia, risco de interdição da obra.",prio:"max"},
+  {n:"EstruturaSP",nicho:"Construção & Reformas",bairro:"São Bernardo",porte:"ME (7–16 func.)",contato:"Evandro Nunes",cargo:"Sócio",tel:"(11) 9 4414-9833",linkedin:"linkedin.com/in/evandro-estrutura",dor:"Estruturas metálicas para galpões. Aço com prazo longo — falta de estoque pode travar obra de R$2M.",prio:"alta"},
+  {n:"ObraPrime",nicho:"Construção & Reformas",bairro:"Campinas",porte:"ME (5–12 func.)",contato:"Celso Cardoso",cargo:"Proprietário",tel:"(11) 9 7731-4499",linkedin:"linkedin.com/in/celso-obraprime",dor:"Obras de reforma em shoppings. Horário noturno restrito e penalidade R$50k por atraso em entrega.",prio:"max"},
+  // RESTAURANTES & FOOD (25 leads)
+  {n:"Bistrô da Vila",nicho:"Restaurantes & Food",bairro:"Pinheiros",porte:"ME (8–16 func.)",contato:"Toninho Mariotti",cargo:"Chef-Proprietário",tel:"(11) 9 4450-3311",linkedin:"linkedin.com/in/toninho-bistro",dor:"Chef é o produto. Sem ele 3 dias, casa perde 60% da receita e clientes não voltam.",prio:"max"},
+  {n:"Sabor & Arte",nicho:"Restaurantes & Food",bairro:"Moema",porte:"ME (10–20 func.)",contato:"Cláudia Benedetti",cargo:"Proprietária",tel:"(11) 9 7763-2244",linkedin:"linkedin.com/in/claudia-sabor",dor:"Restaurante que fatura R$120k/mês. Fornecedor único de insumo orgânico atrasou 3 vezes. Sem plano B.",prio:"max"},
+  {n:"Cantina do Zé",nicho:"Restaurantes & Food",bairro:"Bela Vista",porte:"ME (5–12 func.)",contato:"Jorge Yamamoto",cargo:"Proprietário",tel:"(11) 9 6634-8877",linkedin:"linkedin.com/in/jorge-cantina",dor:"Cantina italiana de 20 anos no bairro. Uma auditoria da Vigilância Sanitária pode fechar por 30 dias.",prio:"max"},
+  {n:"FoodFactory SP",nicho:"Restaurantes & Food",bairro:"Jardins",porte:"ME (12–22 func.)",contato:"Rosana Silveira",cargo:"Sócia-Gestora",tel:"(11) 9 5521-6699",linkedin:"linkedin.com/in/rosana-foodfactory",dor:"Dark kitchen com 4 marcas. Uma marca sendo descredenciada do iFood derruba 25% do faturamento imediatamente.",prio:"max"},
+  {n:"Churrascaria Boi Gordo",nicho:"Restaurantes & Food",bairro:"Lapa",porte:"ME (15–28 func.)",contato:"Marcos Gentile",cargo:"Proprietário",tel:"(11) 9 4412-5533",linkedin:"linkedin.com/in/marcos-boigordo",dor:"Churrascaria com eventos corporativos. Fogo em churrasqueira sem protocolo virou incidente grave no ano passado.",prio:"max"},
+  {n:"Sushi Nobre",nicho:"Restaurantes & Food",bairro:"Itaim Bibi",porte:"ME (8–16 func.)",contato:"Ana Paula Ribeiro",cargo:"Sócia",tel:"(11) 9 7741-3300",linkedin:"linkedin.com/in/anapaularibeir-sushi",dor:"Sushiman principal responsável por toda a produção. Saída dele ou acidente interrompe operação total.",prio:"max"},
+  {n:"Hamburgueria Craft",nicho:"Restaurantes & Food",bairro:"Vila Mariana",porte:"ME (7–14 func.)",contato:"Sérgio Nakamura",cargo:"Proprietário",tel:"(11) 9 5533-7712",linkedin:"linkedin.com/in/sergio-craftburger",dor:"Hamburgueria artesanal com 2 unidades. Gerente de segunda unidade saiu sem passar o operacional para ninguém.",prio:"max"},
+  {n:"Café Paulista",nicho:"Restaurantes & Food",bairro:"Paulista",porte:"ME (6–12 func.)",contato:"Fatima Duarte",cargo:"Proprietária",tel:"(11) 9 4423-9988",linkedin:"linkedin.com/in/fatima-cafe",dor:"Café premium em ponto de alto fluxo. Máquina de espresso avariada deixou sem operar por 5 dias. Sem seguro.",prio:"alta"},
+  {n:"Boteco SP",nicho:"Restaurantes & Food",bairro:"Brooklin",porte:"ME (10–18 func.)",contato:"Luciano Petri",cargo:"Sócio",tel:"(11) 9 6641-2211",linkedin:"linkedin.com/in/luciano-boteco",dor:"Boteco com faturamento de R$80k/mês. 80% caixa. Sem controle de desvio interno por funcionários.",prio:"alta"},
+  {n:"Pizzaria Don Carlo",nicho:"Restaurantes & Food",bairro:"Tatuapé",porte:"ME (8–16 func.)",contato:"Roberto Bianchi",cargo:"Proprietário",tel:"(11) 9 7750-4477",linkedin:"linkedin.com/in/roberto-doncarlo",dor:"Pizzaria delivery com 2 motoqueiros. Um acidente sem protocolo expõe a empresa a processo trabalhista.",prio:"alta"},
+  // CONTABILIDADE (20 leads)
+  {n:"Contabilidade Paulista",nicho:"Contabilidade",bairro:"Paulista",porte:"ME (8–16 func.)",contato:"Roberto Almeida",cargo:"Sócio-Contador",tel:"(11) 9 4480-7722",linkedin:"linkedin.com/in/roberto-contpaulista",dor:"Analista sênior carrega relação com 40 clientes. Se sair, clientes saem junto. Risco de R$200k em receita.",prio:"max"},
+  {n:"Fernandes & Associados",nicho:"Contabilidade",bairro:"Itaim Bibi",porte:"ME (6–14 func.)",contato:"Patricia Souza",cargo:"Sócia",tel:"(11) 9 7742-3388",linkedin:"linkedin.com/in/patricia-fernandes-ctb",dor:"Escritório com clientes do Simples Nacional. Prazo de DEFIS atrasa por sobrecarga em abril sem backup.",prio:"max"},
+  {n:"ContaFácil SP",nicho:"Contabilidade",bairro:"Moema",porte:"ME (5–10 func.)",contato:"Alexandre Lima",cargo:"Sócio-Fundador",tel:"(11) 9 6613-9900",linkedin:"linkedin.com/in/alexandre-contafacil",dor:"Escritório digital. Sistema de gestão contábil com downtime recorrente. Sem plano de contingência de prazo.",prio:"alta"},
+  {n:"Escritório Alves & Cia",nicho:"Contabilidade",bairro:"Jardins",porte:"ME (7–15 func.)",contato:"Renata Costa",cargo:"Diretora",tel:"(11) 9 5524-5566",linkedin:"linkedin.com/in/renata-alves-ctb",dor:"Cliente enterprise representa 40% da receita. Contrato de 1 ano vence em 3 meses. Sem estratégia de renovação.",prio:"alta"},
+  {n:"Prime Contabilidade",nicho:"Contabilidade",bairro:"Brooklin",porte:"ME (8–18 func.)",contato:"Fabio Martins",cargo:"Sócio",tel:"(11) 9 4435-8811",linkedin:"linkedin.com/in/fabio-prime-ctb",dor:"Escritório premium. 3 clientes em regime de Lucro Real. Erro de lançamento pode gerar multa de 75% sobre IR.",prio:"max"},
+  {n:"Contábil Mestre",nicho:"Contabilidade",bairro:"Tatuapé",porte:"ME (5–12 func.)",contato:"Adriana Santos",cargo:"Sócia-Contadora",tel:"(11) 9 7753-2233",linkedin:"linkedin.com/in/adriana-contabilmestre",dor:"Escritório de 12 anos. Fundadora quer reduzir horas mas não documentou processos. Risco de colapso operacional.",prio:"alta"},
+  {n:"Lima & Sócio Contadores",nicho:"Contabilidade",bairro:"Vila Mariana",porte:"ME (6–13 func.)",contato:"Marcelo Rocha",cargo:"Sócio-Administrador",tel:"(11) 9 5562-7744",linkedin:"linkedin.com/in/marcelo-lima-ctb",dor:"Especializado em SIMEI e MEI. 200 clientes. Sem ferramenta de gestão — risco de prazo perdido por volume.",prio:"alta"},
+  {n:"Gestão Contábil SP",nicho:"Contabilidade",bairro:"Perdizes",porte:"ME (8–16 func.)",contato:"Simone Oliveira",cargo:"Diretora",tel:"(11) 9 4441-1199",linkedin:"linkedin.com/in/simone-gestaocontabil",dor:"Especializada em startups. Clientes em fase de captação — erro contábil pode travar due diligence de investidor.",prio:"max"},
+  {n:"Escritório Central SP",nicho:"Contabilidade",bairro:"Bela Vista",porte:"ME (7–14 func.)",contato:"Claudio Ferreira",cargo:"Sócio",tel:"(11) 9 7730-6655",linkedin:"linkedin.com/in/claudio-escritoriocentral",dor:"Clientes do setor de saúde. Mudança na ANS exigiu novo processo — escritório não atualizou rotina a tempo.",prio:"alta"},
+  {n:"ContaExpert",nicho:"Contabilidade",bairro:"Higienópolis",porte:"ME (5–11 func.)",contato:"Monica Alves",cargo:"Sócia-Fundadora",tel:"(11) 9 6621-4488",linkedin:"linkedin.com/in/monica-contaexpert",dor:"Escritório boutique com 30 clientes premium. Sofreu tentativa de golpe de phishing — sem política de segurança digital.",prio:"alta"},
+  // AGÊNCIAS (15 leads)
+  {n:"Agência Criativa SP",nicho:"Agências",bairro:"Pinheiros",porte:"ME (6–12 func.)",contato:"Sergio Nunes",cargo:"CEO / Fundador",tel:"(11) 9 4470-2233",linkedin:"linkedin.com/in/sergio-criativasp",dor:"Atendimento de cliente de R$15k/mês inteiramente na cabeça do sócio. Férias = paralisia.",prio:"max"},
+  {n:"Marketing Masters",nicho:"Agências",bairro:"Vila Olímpia",porte:"ME (8–16 func.)",contato:"Juliana Cardoso",cargo:"Sócia-Diretora",tel:"(11) 9 7741-5566",linkedin:"linkedin.com/in/juliana-marketmasters",dor:"Gestão de tráfego de 12 clientes. Acesso à conta de anúncio de cliente foi hackeado. Sem protocolo de segurança.",prio:"max"},
+  {n:"Growth Agency SP",nicho:"Agências",bairro:"Itaim Bibi",porte:"ME (5–10 func.)",contato:"Ricardo Pinto",cargo:"CEO",tel:"(11) 9 5532-8877",linkedin:"linkedin.com/in/ricardo-growthsp",dor:"Agência de growth para SaaS. Turnover de analistas de 6 meses. Cada saída custa 3 semanas de retrabalho.",prio:"max"},
+  {n:"Digital House SP",nicho:"Agências",bairro:"Jardins",porte:"ME (7–15 func.)",contato:"Luciana Barros",cargo:"Sócia",tel:"(11) 9 4423-7711",linkedin:"linkedin.com/in/luciana-digitalhouse",dor:"Agência full service. Um cliente que representa 35% do faturamento está insatisfeito. Sem protocolo de retenção.",prio:"max"},
+  {n:"MediaFlow SP",nicho:"Agências",bairro:"Moema",porte:"ME (5–11 func.)",contato:"Fernando Vieira",cargo:"CEO",tel:"(11) 9 7750-3322",linkedin:"linkedin.com/in/fernando-mediaflow",dor:"Produção de conteúdo em escala. Plataforma de scheduling parou por 2 dias — nenhum cliente foi avisado.",prio:"alta"},
+  {n:"Agência Pulso",nicho:"Agências",bairro:"Brooklin",porte:"ME (6–12 func.)",contato:"Camila Cruz",cargo:"Sócia Fundadora",tel:"(11) 9 5541-6644",linkedin:"linkedin.com/in/camila-pulso",dor:"Agência de branding. Projeto de R$40k entregue com atraso por dependência de fornecedor de impressão.",prio:"alta"},
+  {n:"SocialMind SP",nicho:"Agências",bairro:"Berrini",porte:"ME (7–14 func.)",contato:"Anderson Lopes",cargo:"Sócio",tel:"(11) 9 4412-9988",linkedin:"linkedin.com/in/anderson-socialmind",dor:"Especializada em social media para varejo. Alta temporada sem planejamento de capacidade extra — entrega ruim.",prio:"alta"},
+  {n:"Click & Grow SP",nicho:"Agências",bairro:"Paulista",porte:"ME (5–10 func.)",contato:"Vanessa Moura",cargo:"CEO",tel:"(11) 9 7723-4455",linkedin:"linkedin.com/in/vanessa-clickgrow",dor:"Performance e mídia paga. Verba de cliente gerenciada sem controle duplo. Risco de uso indevido não identificado.",prio:"max"},
+  {n:"Agência Amplia",nicho:"Agências",bairro:"Vila Mariana",porte:"ME (4–9 func.)",contato:"Thiago Ramos",cargo:"Fundador",tel:"(11) 9 5530-1199",linkedin:"linkedin.com/in/thiago-amplia",dor:"Atendimento B2B para indústria. Perda de 1 cliente grande (R$8k/mês) desequilibra o fluxo de caixa do mês.",prio:"alta"},
+  {n:"ContentLab SP",nicho:"Agências",bairro:"Perdizes",porte:"ME (5–10 func.)",contato:"Priscila Teixeira",cargo:"Sócia-Diretora",tel:"(11) 9 4441-7733",linkedin:"linkedin.com/in/priscila-contentlab",dor:"Produção de conteúdo para 20 clientes. Redator principal é freelancer. Saída dele trava 40% da produção.",prio:"alta"},
+  {n:"GrowMark SP",nicho:"Agências",bairro:"Bela Vista",porte:"ME (6–13 func.)",contato:"Eduardo Corrêa",cargo:"CEO",tel:"(11) 9 7762-5500",linkedin:"linkedin.com/in/eduardo-growmark",dor:"Inbound marketing B2B. CRM perdeu dados de 3 meses por falha de integração. Sem backup de pipeline.",prio:"max"},
+  {n:"Agência TrendSP",nicho:"Agências",bairro:"Morumbi",porte:"ME (5–11 func.)",contato:"Daniela Faria",cargo:"Diretora",tel:"(11) 9 5523-8866",linkedin:"linkedin.com/in/daniela-trendsp",dor:"Agência focada em moda e lifestyle. Campanha de lançamento atrasou por aprovação de cliente — sem gestão de prazo.",prio:"alta"},
+  {n:"Branding SP",nicho:"Agências",bairro:"Butantã",porte:"ME (4–9 func.)",contato:"Rodrigo Dias",cargo:"Sócio-Criativo",tel:"(11) 9 4452-3344",linkedin:"linkedin.com/in/rodrigo-brandingsp",dor:"Estúdio de branding. Designer sênior saiu levando portfólio de cliente. Sem NDA e sem protocolo de offboarding.",prio:"max"},
+  {n:"DigiBase SP",nicho:"Agências",bairro:"ABC Paulista",porte:"ME (5–12 func.)",contato:"Isabela Monteiro",cargo:"CEO",tel:"(11) 9 7741-9911",linkedin:"linkedin.com/in/isabela-digibase",dor:"Agência full digital regional. Único desenvolvedor saiu. Site de cliente ficou fora do ar por 3 dias.",prio:"max"},
+  {n:"MarketingOn SP",nicho:"Agências",bairro:"Guarulhos",porte:"ME (6–14 func.)",contato:"Felipe Monteiro",cargo:"Sócio-Fundador",tel:"(11) 9 5530-7766",linkedin:"linkedin.com/in/felipe-marketingon",dor:"Agência de varejo. Facebook Ads conta bloqueada sem protocolo de resolução — R$30k em campanha parada.",prio:"max"},
+];
+
+// ─── STATE ─────────────────────────────────────────────────────────────
+let leadsData = LEADS_RAW.map((l, i) => ({
+  ...l,
+  id: i,
+  status: 'new',
+  comments: [],
+}));
+let filteredIds = leadsData.map(l => l.id);
+let currentLead = null;
+
+// ─── INIT ──────────────────────────────────────────────────────────────
+function init() {
+  buildNichoPills();
+  renderTable(filteredIds);
+  updateMetrics();
+}
+
+function buildNichoPills() {
+  const nichos = ['Todos', ...new Set(LEADS_RAW.map(l => l.nicho))];
+  const counts = {};
+  leadsData.forEach(l => { counts[l.nicho] = (counts[l.nicho] || 0) + 1; });
+  const wrap = document.getElementById('nichoPills');
+  wrap.innerHTML = nichos.map(n => {
+    const count = n === 'Todos' ? leadsData.length : (counts[n] || 0);
+    return `<div class="nicho-pill ${n==='Todos'?'active':''}" data-nicho="${n}" onclick="filterNicho('${n}', this)">
+      ${n} <span class="nicho-count">${count}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── FILTERS ──────────────────────────────────────────────────────────
+function applyFilters() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const status = document.getElementById('statusFilter').value;
+  const nicho = document.getElementById('nichoFilter').value;
+  filteredIds = leadsData.filter(l => {
+    const matchQ = !q || l.n.toLowerCase().includes(q) || l.contato.toLowerCase().includes(q) || l.bairro.toLowerCase().includes(q) || l.nicho.toLowerCase().includes(q);
+    const matchStatus = !status || l.status === status;
+    const matchNicho = !nicho || l.nicho === nicho;
+    return matchQ && matchStatus && matchNicho;
+  }).map(l => l.id);
+  renderTable(filteredIds);
+  updateMetrics();
+}
+
+function filterNicho(nicho, el) {
+  document.querySelectorAll('.nicho-pill').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('nichoFilter').value = nicho === 'Todos' ? '' : nicho;
+  applyFilters();
+}
+
+function filterStatus(s) {
+  document.getElementById('statusFilter').value = s;
+  applyFilters();
+}
+
+function clearFilters() {
+  document.getElementById('searchInput').value = '';
+  document.getElementById('statusFilter').value = '';
+  document.getElementById('nichoFilter').value = '';
+  document.querySelectorAll('.nicho-pill').forEach((p,i) => { if(i===0) p.classList.add('active'); else p.classList.remove('active'); });
+  applyFilters();
+}
+
+// ─── RENDER TABLE ──────────────────────────────────────────────────────
+function nichoClass(n) {
+  if(n.includes('TI')) return 'tag-ti';
+  if(n.includes('Saúde')) return 'tag-saude';
+  if(n.includes('Constru')) return 'tag-construcao';
+  if(n.includes('Restaur')) return 'tag-restaurante';
+  if(n.includes('Cont')) return 'tag-contabil';
+  return 'tag-agencia';
+}
+
+function statusBadge(s) {
+  const map = {
+    new: ['s-new','Não contatado'],
+    contacted: ['s-contacted','Contatado'],
+    replied: ['s-replied','Respondeu'],
+    interested: ['s-interested','Interessado ✓'],
+    not: ['s-not','Não interessado'],
+  };
+  const [cls, label] = map[s] || map.new;
+  return `<span class="status-badge ${cls}"><span class="status-dot"></span>${label}</span>`;
+}
+
+function prioBadge(p) {
+  const map = { max:['p-max','MAX'], alta:['p-alta','ALTA'], media:['p-media','MÉDIA'] };
+  const [cls, label] = map[p] || ['p-media','MÉDIA'];
+  return `<span class="prio-badge ${cls}">${label}</span>`;
+}
+
+function waLink(tel, company) {
+  const num = tel.replace(/\D/g,'');
+  const msg = encodeURIComponent(`Oi! Sou o fundador do RiskMap 🗺️\n\nEstamos criando um app que mapeia os riscos operacionais de empresas como a ${company} em 15 minutos — sem consultor.\n\nToparia dar um feedback rápido?`);
+  return `https://wa.me/55${num}?text=${msg}`;
+}
+
+function renderTable(ids) {
+  const tbody = document.getElementById('tableBody');
+  const empty = document.getElementById('emptyState');
+  if(ids.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    document.getElementById('rowCount').textContent = '0 leads encontrados';
+    return;
+  }
+  empty.style.display = 'none';
+  document.getElementById('rowCount').textContent = `${ids.length} lead${ids.length!==1?'s':''} encontrado${ids.length!==1?'s':''}`;
+  tbody.innerHTML = ids.map(id => {
+    const l = leadsData[id];
+    return `<tr class="${l.status !== 'new' ? 'contacted' : ''}" onclick="openModal(${id})">
+      <td style="color:var(--text3);font-size:11px">${id+1}</td>
+      <td>
+        <div class="company-name">${l.n}</div>
+        <div class="company-bairro">${l.bairro} · ${l.porte}</div>
+      </td>
+      <td><span class="nicho-tag ${nichoClass(l.nicho)}">${l.nicho}</span></td>
+      <td>
+        <div class="contact-name">${l.contato}</div>
+        <div class="contact-cargo">${l.cargo}</div>
+      </td>
+      <td><span style="color:var(--text2);font-size:11px">${l.tel}</span></td>
+      <td onclick="event.stopPropagation()">
+        <a class="wa-btn" href="${waLink(l.tel, l.n)}" target="_blank">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          WhatsApp
+        </a>
+      </td>
+      <td>${statusBadge(l.status)}</td>
+      <td>${prioBadge(l.prio)}</td>
+      <td>
+        <button style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);border-radius:5px;padding:5px 10px;font-size:10px;font-family:'DM Mono',monospace;cursor:pointer;letter-spacing:.5px" onclick="event.stopPropagation();openModal(${id})">
+          Ver detalhes
+        </button>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── METRICS ───────────────────────────────────────────────────────────
+function updateMetrics() {
+  const visible = filteredIds.map(id => leadsData[id]);
+  document.getElementById('m-total').textContent = filteredIds.length;
+  document.getElementById('m-contacted').textContent = visible.filter(l=>l.status==='contacted').length;
+  document.getElementById('m-replied').textContent = visible.filter(l=>l.status==='replied').length;
+  document.getElementById('m-interested').textContent = visible.filter(l=>l.status==='interested').length;
+  const total = leadsData.length;
+  const cont = leadsData.filter(l=>l.status!=='new').length;
+  document.getElementById('ss-total').textContent = total;
+  document.getElementById('ss-rate').textContent = total > 0 ? Math.round(cont/total*100)+'%' : '0%';
+}
+
+// ─── MODAL ─────────────────────────────────────────────────────────────
+function openModal(id) {
+  currentLead = id;
+  const l = leadsData[id];
+  document.getElementById('m-company').textContent = l.n;
+  document.getElementById('m-nicho-tag').textContent = l.nicho + ' · ' + l.bairro;
+  document.getElementById('m-bairro').textContent = l.bairro;
+  document.getElementById('m-porte').textContent = l.porte;
+  document.getElementById('m-phone').textContent = l.tel;
+  document.getElementById('m-contact').textContent = l.contato;
+  document.getElementById('m-cargo').textContent = l.cargo;
+  document.getElementById('m-dor').textContent = l.dor;
+  document.getElementById('m-linkedin').innerHTML = `<a href="https://${l.linkedin}" target="_blank">${l.linkedin}</a>`;
+  document.getElementById('m-status-select').value = l.status;
+  document.getElementById('m-comment-input').value = '';
+  renderComments(id);
+  document.getElementById('modalOverlay').classList.add('open');
+}
+
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('open');
+  currentLead = null;
+}
+
+function closeModalOutside(e) {
+  if(e.target === document.getElementById('modalOverlay')) closeModal();
+}
+
+function renderComments(id) {
+  const l = leadsData[id];
+  const list = document.getElementById('m-comments-list');
+  if(!l.comments || l.comments.length === 0) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--text3);padding:8px 0">Nenhum comentário ainda.</div>';
+    return;
+  }
+  list.innerHTML = l.comments.slice().reverse().map(c => `
+    <div class="comment-item">
+      <div class="comment-meta">${c.date} · Status: ${c.status}</div>
+      <div class="comment-text">${c.text}</div>
+    </div>
+  `).join('');
+}
+
+function updateStatus() {
+  if(currentLead === null) return;
+  leadsData[currentLead].status = document.getElementById('m-status-select').value;
+  renderTable(filteredIds);
+  updateMetrics();
+}
+
+function saveComment() {
+  if(currentLead === null) return;
+  const text = document.getElementById('m-comment-input').value.trim();
+  if(!text) return;
+  const l = leadsData[currentLead];
+  l.status = document.getElementById('m-status-select').value;
+  l.comments.push({
+    text,
+    date: new Date().toLocaleString('pt-BR'),
+    status: l.status,
+  });
+  document.getElementById('m-comment-input').value = '';
+  renderComments(currentLead);
+  renderTable(filteredIds);
+  updateMetrics();
+  showToast('Comentário salvo ✓');
+}
+
+// ─── EXPORT CSV ────────────────────────────────────────────────────────
+function exportCSV() {
+  const headers = ['#','Empresa','Nicho','Bairro','Porte','Contato','Cargo','Telefone','LinkedIn','Status','Prioridade','Comentários'];
+  const rows = filteredIds.map(id => {
+    const l = leadsData[id];
+    return [id+1, l.n, l.nicho, l.bairro, l.porte, l.contato, l.cargo, l.tel, l.linkedin, l.status, l.prio, l.comments.map(c=>c.text).join(' | ')];
+  });
+  const csv = [headers, ...rows].map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'riskmap_leads.csv';
+  a.click();
+  showToast('CSV exportado ✓');
+}
+
+// ─── TOAST ─────────────────────────────────────────────────────────────
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// keyboard esc
+document.addEventListener('keydown', e => { if(e.key==='Escape') closeModal(); });
+
+init();
+</script>
+</body>
+</html>
